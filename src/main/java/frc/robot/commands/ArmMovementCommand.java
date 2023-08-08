@@ -4,32 +4,39 @@
 
 package frc.robot.commands;
 
-import frc.robot.subsystems.ExampleSubsystem;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.RobotContainer;
+import frc.robot.subsystems.ArmMotorSubsystem;
 
-/** An example command that uses an example subsystem. */
-public class ExampleCommand extends CommandBase {
-  @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
-  private final ExampleSubsystem m_subsystem;
+/**
+  * Moves upper arm to target position
+ */
+public class ArmMovementCommand extends CommandBase {
 
-  /**
-   * Creates a new ExampleCommand.
-   *
-   * @param subsystem The subsystem used by this command.
-   */
-  public ExampleCommand(ExampleSubsystem subsystem) {
-    m_subsystem = subsystem;
+  private ArmMotorSubsystem m_armMotorSubsystem;
+  private double m_targetPose;
+
+
+
+  /** Creates a new ArmMoveCommand. */
+  public ArmMovementCommand(ArmMotorSubsystem armMotorSubsystem, double targetPose) {
     // Use addRequirements() here to declare subsystem dependencies.
-    addRequirements(subsystem);
+    m_armMotorSubsystem = armMotorSubsystem;
+    m_targetPose = targetPose;
+
+    addRequirements(m_armMotorSubsystem);
   }
 
   // Called when the command is initially scheduled.
   @Override
-  public void initialize() {}
+  public void initialize() {
+    m_armMotorSubsystem.setPose(m_targetPose);
+  }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
-  public void execute() {}
+  public void execute() {
+  }
 
   // Called once the command ends or is interrupted.
   @Override
@@ -38,6 +45,6 @@ public class ExampleCommand extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    return m_armMotorSubsystem.areWeThereYet();
   }
 }

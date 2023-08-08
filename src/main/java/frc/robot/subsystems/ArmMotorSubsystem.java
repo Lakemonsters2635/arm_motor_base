@@ -23,10 +23,10 @@ public class ArmMotorSubsystem extends SubsystemBase {
   private  double theta;
   private  double m_poseTarget = Constants.TOP_SCORING_ANGLE - 10;
   private double fPO;
-  private ClawPneumaticSubsystem cns;
+  
   
   /** Creates a new ArmMotorSubsystem. */
-  public ArmMotorSubsystem(ClawPneumaticSubsystem cns) {
+  public ArmMotorSubsystem( ) {
     
     pid.setTolerance(10);
   }
@@ -37,19 +37,13 @@ public class ArmMotorSubsystem extends SubsystemBase {
     loopCtr++;
     double upperLimit, lowerLimit, alpha;
 
-    if (RobotContainer.m_armPneumaticSubsystem.getIsExtended()) {
-      alpha = Constants.ARM_EXTENDED_ALPHA;
-      lowerLimit = Constants.ARM_EXTENDED_LOWER_LIMIT;
-      upperLimit = Constants.ARM_EXTENDED_UPPER_LIMIT;
-    } else {
-      alpha = Constants.ARM_RETRACTED_ALPHA;
-      lowerLimit = Constants.ARM_RETRACTED_LOWER_LIMIT;
-      upperLimit = Constants.ARM_RETRACTED_UPPER_LIMIT;
-    }
+    //Assumes that pneumatics are always retracted
+    alpha = Constants.ARM_RETRACTED_ALPHA;
+    lowerLimit = Constants.ARM_RETRACTED_LOWER_LIMIT;
+    upperLimit = Constants.ARM_RETRACTED_UPPER_LIMIT;
+    
     // Arm pose trim override
-    Joystick hatJoystickTrimRotationArm = (Constants.HAT_JOYSTICK_TRIM_ROTATION_ARM == Constants.LEFT_JOYSTICK_CHANNEL)
-      ? RobotContainer.leftJoystick
-      : RobotContainer.rightJoystick;
+    Joystick hatJoystickTrimRotationArm = RobotContainer.rightJoystick;
     if(hatJoystickTrimRotationArm.getPOV()==Constants.HAT_POV_ARM_UP){
       m_poseTarget += Constants.HAT_POSE_TARGET_PER_TIME_STEP;
     }
@@ -57,11 +51,6 @@ public class ArmMotorSubsystem extends SubsystemBase {
       m_poseTarget += Constants.HAT_POSE_TARGET_PER_TIME_STEP*-1.0;
     }
     m_poseTarget = MathUtil.clamp(m_poseTarget, lowerLimit, upperLimit);
-
-    // manual control of the upper arm with z axis slider
-    // double val = -RobotContainer.rightJoystick.getRawAxis(3);
-    // double angle = (val+1.0)*180.0;
-    // m_poseTarget = MathUtil.clamp(angle, lowerLimit, upperLimit);
 
 
     theta = 360.0 * (RobotContainer.encoder.getValue() - Constants.ARM_ENCODER_OFFSET) / 4096.0;
@@ -77,16 +66,10 @@ public class ArmMotorSubsystem extends SubsystemBase {
     final double gain = Constants.ARM_MOTOR_FF_GAIN;
     double ffMotorPower = gain * Math.sin(Math.toRadians(fPO));
 
-    double lowerLimitFB = cns.getIsClosed() ? Constants.FB_LOWER_LIMIT_CLOSED : Constants.FB_LOWER_LIMIT_OPEN;
-    double upperLimitFB = cns.getIsClosed() ? Constants.FB_UPPER_LIMIT_CLOSED : Constants.FB_UPPER_LIMIT_OPEN;
+    double lowerLimitFB = Constants.FB_LOWER_LIMIT_OPEN;
+    double upperLimitFB = Constants.FB_UPPER_LIMIT_OPEN;
     double fbMotorPower = MathUtil.clamp(pid.calculate(theta, m_poseTarget), lowerLimitFB, upperLimitFB);
 
-    if (loopCtr % 50 == 0) {
-    //   System.out.println("theta=" + theta + "   Target = " + m_poseTarget);
-    //   System.out.print("FF Motor Power = " + ffMotorPower);
-    //   System.out.println("   FB Motor Power = " + fbMotorPower);
-    //   System.out.println("fPO = " + fPO + "   Theta = " + theta + "   Alpha = " + alpha + "   Raw = " + RobotContainer.encoder.getValue());
-    }
     double motorPower = fbMotorPower - ffMotorPower;
     armMotor.set(ControlMode.PercentOutput, motorPower);
     // putToSDB();
@@ -96,7 +79,6 @@ public class ArmMotorSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("theta", theta);
     SmartDashboard.putNumber("fPO", fPO);
     SmartDashboard.putNumber("Raw", RobotContainer.encoder.getValue());
-    SmartDashboard.putNumber("pneumatic state", (RobotContainer.m_armPneumaticSubsystem.getIsExtended() == true ? 1 : 0));
   }
 
   public double getTheta() { // arm angle with respect to the lower arm
